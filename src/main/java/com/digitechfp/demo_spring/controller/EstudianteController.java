@@ -1,6 +1,7 @@
 package com.digitechfp.demo_spring.controller;
 
 import com.digitechfp.demo_spring.entity.Estudiante;
+import com.digitechfp.demo_spring.entity.PerfilAcademico;
 import com.digitechfp.demo_spring.service.EstudianteService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +22,7 @@ public class EstudianteController {
 
     // Listar todos los estudiantes
     @GetMapping
-    public List<Estudiante> obtenerTodos(){
+    public List<Estudiante> obtenerTodos() {
         return estudianteService.listarTodos();
     }
 
@@ -29,23 +30,23 @@ public class EstudianteController {
     @GetMapping("/{id}")
     public ResponseEntity<?> obtenerPorId(
             @PathVariable Long id
-    ){
+    ) {
         return estudianteService.buscarPorId(id)
                 .<ResponseEntity<?>>map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.status(
-                        HttpStatus.NOT_FOUND)
+                                HttpStatus.NOT_FOUND)
                         .body(Collections.singletonMap(
-                                "mensaje","El estudiante no existe")));
+                                "mensaje", "El estudiante no existe")));
     }
 
     // CREAR UN NUEVO ESTUDIANTE
     @PostMapping
-    public ResponseEntity<?> crearEstudiante(@RequestBody Estudiante estudiante){
+    public ResponseEntity<?> crearEstudiante(@RequestBody Estudiante estudiante) {
         // Validamos si el email ya está registrado
-        if(estudianteService.existsByCorreo(estudiante.getCorreo())){
+        if (estudianteService.existsByCorreo(estudiante.getCorreo())) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(Collections.singletonMap(
-                            "mensaje","El correo ya está registrado por otro estudiante"
+                            "mensaje", "El correo ya está registrado por otro estudiante"
                     ));
         }
         // Si el correo no está registrado, GUARDAMOS EL ESTUDIANTE
@@ -60,12 +61,24 @@ public class EstudianteController {
     public ResponseEntity<?> actualizarCompleto(
             @PathVariable Long id,
             @RequestBody Estudiante estudianteDatos
-    ){
+    ) {
         return estudianteService.buscarPorId(id)
                 .<ResponseEntity<?>>map(estudianteExistente -> {
                     estudianteExistente.setNombre(estudianteDatos.getNombre());
                     estudianteExistente.setEdad(estudianteDatos.getEdad());
                     estudianteExistente.setCorreo(estudianteDatos.getCorreo());
+
+                    // Actualizamos los datos de relación 1a1
+                    if (estudianteDatos.getPerfilAcademico() != null) {
+                        if (estudianteExistente.getPerfilAcademico() != null) {
+                            estudianteExistente.getPerfilAcademico().setNivelIngles(
+                                    estudianteDatos.getPerfilAcademico().getNivelIngles());
+                            estudianteExistente.getPerfilAcademico().setBiografia(
+                                    estudianteDatos.getPerfilAcademico().getBiografia());
+                        }
+                    } else {
+                        estudianteExistente.setPerfilAcademico(null);
+                    }
 
                     Estudiante estudianteActualizado =
                             estudianteService.guardarEstudiante(estudianteExistente);
@@ -80,11 +93,11 @@ public class EstudianteController {
     public ResponseEntity<?> actualizarParcial(
             @PathVariable Long id,
             @RequestBody Map<String, Object> campos
-            ){
+    ) {
         return estudianteService.buscarPorId(id)
-                .<ResponseEntity<?>>map(estudianteExistente ->{
+                .<ResponseEntity<?>>map(estudianteExistente -> {
                     campos.forEach((campo, valor) -> {
-                        switch (campo){
+                        switch (campo) {
                             case "nombre":
                                 estudianteExistente.setNombre((String) valor);
                                 break;
@@ -93,6 +106,29 @@ public class EstudianteController {
                                 break;
                             case "edad":
                                 estudianteExistente.setEdad(((Number) valor).intValue());
+                                break;
+                            case "perfilAcademico":
+                                if (valor instanceof Map){
+                                    @SuppressWarnings("unchecked")
+                                            Map<String, Object> datosPerfil =
+                                            (Map<String, Object>) valor;
+
+                                    PerfilAcademico perfilAcademico =
+                                            estudianteExistente.getPerfilAcademico();
+                                    if (perfilAcademico == null){
+                                        perfilAcademico = new PerfilAcademico();
+                                        estudianteExistente.setPerfilAcademico(perfilAcademico);
+                                    }
+                                    if(datosPerfil.containsKey("biografia")){
+                                        perfilAcademico.setBiografia((String)datosPerfil.get("biografia"));
+                                    }
+                                    if(datosPerfil.containsKey("nivelIngles")){
+                                        perfilAcademico.setNivelIngles((String)datosPerfil.get("nivelIngles"));
+                                    }
+
+                                } else if (valor == null) {
+                                    estudianteExistente.setPerfilAcademico(null);
+                                }
                                 break;
 
                         }
@@ -107,15 +143,15 @@ public class EstudianteController {
 
     // BORRAR
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> eliminarEstudiante(@PathVariable Long id){
-        if (estudianteService.buscarPorId(id).isPresent()){
+    public ResponseEntity<?> eliminarEstudiante(@PathVariable Long id) {
+        if (estudianteService.buscarPorId(id).isPresent()) {
             estudianteService.eliminarEstudiante(id);
             return ResponseEntity.ok(Collections.singletonMap(
-                    "mensaje","Usuario borrado"));
+                    "mensaje", "Usuario borrado"));
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(Collections.singletonMap(
-                        "mensaje","El estudiante no existe."));
+                        "mensaje", "El estudiante no existe."));
     }
 
 

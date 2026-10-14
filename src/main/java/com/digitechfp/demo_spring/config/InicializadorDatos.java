@@ -1,6 +1,8 @@
 package com.digitechfp.demo_spring.config;
 
 import com.digitechfp.demo_spring.entity.Estudiante;
+import com.digitechfp.demo_spring.entity.Oficina;
+import com.digitechfp.demo_spring.entity.PerfilAcademico;
 import com.digitechfp.demo_spring.entity.Profesor;
 import com.digitechfp.demo_spring.repository.EstudianteRepository;
 import com.digitechfp.demo_spring.repository.ProfesorRepository;
@@ -16,11 +18,16 @@ public class InicializadorDatos {
     @Bean
     CommandLineRunner initData(EstudianteRepository estudianteRepository, ProfesorRepository profesorRepository){
         return args -> {
-            // INSERTAR ESTUDIANTES
+            // INSERTAR ESTUDIANTES con PERFIL ACADEMICO
+            PerfilAcademico perfilAcademico1 =
+                    new PerfilAcademico("Apasionado del Backend","B2");
+            PerfilAcademico perfilAcademico2 =
+                    new PerfilAcademico("Apasionado del Frontend","B1");
+
             Estudiante estudiante1 = new Estudiante("Ana García",
-                    "ana.garcia@digitechfp.com",19);
+                    "ana.garcia@digitechfp.com",19,perfilAcademico1);
             Estudiante estudiante2 = new Estudiante("Pedro Martínez",
-                    "pedro.martinez@digitechfp.com",18);
+                    "pedro.martinez@digitechfp.com",18, perfilAcademico2);
 
             estudianteRepository.save(estudiante1);
             estudianteRepository.save(estudiante2);
@@ -75,9 +82,14 @@ public class InicializadorDatos {
 
 
             System.out.println("\n>>>> PROFESORES");
-            Profesor profesor = new Profesor("Pablo Laoz", "Proyecto Intermodular",33);
-            Profesor profesor1 = new Profesor("Laura Segurola", "PMDM",36);
-            Profesor profesor2 = new Profesor("Raúl Martínez", "Diseño de interfaces",31);
+
+            Oficina oficina = new Oficina("VLC0001","B3");
+            Oficina oficina1 = new Oficina("VLC0002","G3");
+            Oficina oficina2 = new Oficina("VLC0003","H6");
+
+            Profesor profesor = new Profesor("Pablo Laoz", "Proyecto Intermodular",33,oficina);
+            Profesor profesor1 = new Profesor("Laura Segurola", "PMDM",36, oficina1);
+            Profesor profesor2 = new Profesor("Raúl Martínez", "Diseño de interfaces",31, oficina2);
 
 
             //profesorRepository.saveAll(List.of(profesor,profesor1,profesor2));
